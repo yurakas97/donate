@@ -7,6 +7,8 @@ var requiredNetworkId;
 let web3;
 let accounts;
 var isWalletConnected = false;
+let apiURL = 'https://donate.yurakas97.xyz/api/data'; // Замініть на адресу вашого сервера
+
 
 
 // Адрес контракту
@@ -179,6 +181,9 @@ donateButton.addEventListener("click", () => {
     if (isWalletConnected) donate()
 })
 
+checkNetwork();
+readData()
+
 async function donate() {
     accounts = await web3.eth.getAccounts();
     //let gasEstimate = await contract.methods.donate().estimateGas({ from: accounts[0] });
@@ -308,6 +313,7 @@ function successDonate() {
         const li = document.createElement('li');
         li.textContent = donor;
         document.getElementById('donorsList').appendChild(li);
+        writeData(donor)
 
         const targetSection = document.getElementById("thank-you");
         targetSection.scrollIntoView({ behavior: 'smooth' });
@@ -321,6 +327,50 @@ function successDonate() {
     // document.getElementById('videoThanks').appendChild(video);
 };
 
-// Викличте перевірку мережі
-checkNetwork();
+function readData() {
+    fetch(apiURL)
+        .then(response => response.json())
+        .then(data => {
+            // Відображення даних у форматі тексту
+            //output.textContent = data.data || 'Файл порожній';
+            let arr = data.data.split('\n').filter(item => item.trim() !== '');
+            console.log(arr)
+            arr.forEach((item) => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                document.getElementById('donorsList').appendChild(li);
+            })
+        })
+        .catch(error => {
+            console.error('Помилка при зчитуванні:', error);
+            output.textContent = 'Помилка при зчитуванні файлу';
+        });
+}
+
+function writeData(data) {
+    const newData = data; // Отримати текст з поля вводу
+
+    if (!newData) {
+        alert('Введіть текст для запису!');
+        return;
+    }
+
+    fetch(apiURL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newData }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(`writted: ${data.message}`); // Повідомлення про успіх
+            //inputData.value = ''; // Очистити поле вводу
+            //readData(); // Оновити дані на сторінці
+        })
+        .catch(error => {
+            console.error('Помилка при записі:', error);
+            //alert('Помилка при записі даних');
+        });
+}
 
